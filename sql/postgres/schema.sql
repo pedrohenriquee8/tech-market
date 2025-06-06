@@ -1,0 +1,39 @@
+CREATE TABLE IF NOT EXISTS cliente (
+  id SERIAL PRIMARY KEY,
+  nome VARCHAR(100) NOT NULL,
+  email VARCHAR(100) UNIQUE NOT NULL,
+  telefone VARCHAR(20),
+  data_cadastro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  cpf VARCHAR(14) UNIQUE NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS produto (
+  id SERIAL PRIMARY KEY,
+  nome VARCHAR(100) NOT NULL,
+  categoria VARCHAR(50),
+  preco NUMERIC(10, 2) NOT NULL,
+  estoque INT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS pedido (
+  id SERIAL PRIMARY KEY,
+  id_cliente INT REFERENCES cliente(id),
+  data_pedido TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  STATUS VARCHAR(50),
+  valor_total NUMERIC(10, 2) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS pedido_item (
+  id SERIAL PRIMARY KEY,
+  id_pedido INT REFERENCES pedido(id) ON DELETE CASCADE,
+  id_produto INT REFERENCES produto(id),
+  quantidade INT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS pagamento (
+  id SERIAL PRIMARY KEY,
+  id_pedido INT REFERENCES pedido(id),
+  tipo VARCHAR(20) CHECK (tipo IN ('cartao', 'pix', 'boleto')),
+  STATUS VARCHAR(20),
+  data_pagamento TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
