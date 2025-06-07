@@ -56,17 +56,22 @@ services:
     volumes:
       - cassandra_data:/var/lib/cassandra
 
-  cassandra-web:
-    image: ipushc/cassandra-web
-    container_name: cassandra-web
-    restart: always
-    ports:
-      - "3000:3000"
-    environment:
-      - CASSANDRA_HOST=cassandra
-      - CASSANDRA_PORT=9042
+  cassandra-init:
+    image: cassandra:latest
+    restart: on-failure
     depends_on:
       - cassandra
+    volumes:
+      - ./cassandra/schema.cql:/scripts/schema.cql 
+    command: >
+      /bin/bash -c "
+        echo 'Aguardando o Cassandra aceitar conexões...';
+        until cqlsh -e 'describe keyspaces' cassandra; do
+          echo -n '.' && sleep 5;
+        done;
+        echo -e '\nCassandra está pronto! Executando o script schema.cql...';
+        cqlsh -f /scripts/schema.cql cassandra;
+      "
 
 volumes:
   postgres_data:
