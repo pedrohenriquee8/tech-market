@@ -1,5 +1,3 @@
-// scripts/seed_cassandra.ts
-
 import { CassandraConnection } from "@infra/cassandra/connection";
 import { clients, products, orders } from "@scripts/mock";
 import { logTime } from "@scripts/logTime";
