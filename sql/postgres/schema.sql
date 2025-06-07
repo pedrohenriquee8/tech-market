@@ -39,15 +39,3 @@ CREATE TABLE IF NOT EXISTS pagamento (
   status VARCHAR(20),
   data_pagamento TIMESTAMP
 );
--- 1. Cria a função que fará a atualização
-CREATE OR REPLACE FUNCTION fn_atualizar_valor_total() RETURNS TRIGGER AS $$ BEGIN -- Atualiza o valor_total na tabela 'pedido' somando o valor do novo item
-UPDATE pedido
-SET valor_total = valor_total + (NEW.quantidade * NEW.valor_unitario)
-WHERE id = NEW.id_pedido;
-RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
--- 2. Cria o trigger que é acionado após a inserção em 'pedido_item'
-CREATE TRIGGER trg_atualizar_valor_pedido
-AFTER
-INSERT ON pedido_item FOR EACH ROW EXECUTE FUNCTION fn_atualizar_valor_total();
