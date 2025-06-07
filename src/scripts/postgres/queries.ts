@@ -1,10 +1,12 @@
 import { PostgresConnection } from "@infra/postgres/connection";
+import { logTime } from "@scripts/logTime";
 
 const db = new PostgresConnection();
 
 async function fetchClientAndRecentOrders(email: string) {
   const client = await db.connect();
   const start = Date.now();
+  console.log(`Fetching client and recent orders for email: ${email}`);
 
   try {
     const clientResult = await client.query(
@@ -19,7 +21,7 @@ async function fetchClientAndRecentOrders(email: string) {
 
     const clientData = clientResult.rows[0];
 
-    const ordersResult = await client.query(
+    await client.query(
       `SELECT id, data_pedido, status, valor_total
        FROM pedido
        WHERE id_cliente = $1
@@ -28,20 +30,7 @@ async function fetchClientAndRecentOrders(email: string) {
       [clientData.id]
     );
 
-    const duration = ((Date.now() - start) / 1000).toFixed(3);
-    console.log(`Query executed in ${duration} seconds`);
-
-    console.log(`Client: ${clientData.nome}`);
-    console.log("Last 3 orders:");
-    ordersResult.rows.forEach((order: any, index: number) => {
-      console.log(
-        `#${index + 1} | ID: ${
-          order.id
-        } | Date: ${order.data_pedido.toISOString()} | Status: ${
-          order.status
-        } | Total: $${order.valor_total}`
-      );
-    });
+    logTime("Fetch Client and Recent Orders Query", start, 3);
   } catch (error) {
     console.error("Error fetching client/orders:", error);
   } finally {
@@ -53,6 +42,7 @@ async function fetchClientAndRecentOrders(email: string) {
 async function fetchProductsByCategorySorted(category: string) {
   const client = await db.connect();
   const start = Date.now();
+  console.log(`Fetching products in category: ${category}`);
 
   try {
     const result = await client.query(
@@ -63,8 +53,7 @@ async function fetchProductsByCategorySorted(category: string) {
       [category]
     );
 
-    const duration = ((Date.now() - start) / 1000).toFixed(3);
-    console.log(`Query executed in ${duration} seconds`);
+    logTime("Fetch Products By Category Query", start, 3);
 
     if (result.rowCount === 0) {
       console.log(`No products found in category: ${category}`);
@@ -72,13 +61,7 @@ async function fetchProductsByCategorySorted(category: string) {
     }
 
     console.log(`Products in category: ${category}`);
-    result.rows.forEach((product: any, index: number) => {
-      console.log(
-        `#${index + 1} | ID: ${product.id} | Name: ${product.nome} | Price: $${
-          product.preco
-        } | Stock: ${product.estoque}`
-      );
-    });
+    console.log(`${result.rowCount} products found`);
   } catch (error) {
     console.error("Error fetching products by category:", error);
   } finally {
@@ -90,6 +73,7 @@ async function fetchProductsByCategorySorted(category: string) {
 async function fetchDeliveredOrdersByClientEmail(email: string) {
   const client = await db.connect();
   const start = Date.now();
+  console.log(`Fetching delivered orders for client email: ${email}`);
 
   try {
     const result = await client.query(
@@ -101,22 +85,16 @@ async function fetchDeliveredOrdersByClientEmail(email: string) {
       [email]
     );
 
-    const duration = ((Date.now() - start) / 1000).toFixed(3);
-    console.log(`Query executed in ${duration} seconds`);
+    logTime("Fetch Delivered Orders Query", start, 3);
 
     if (result.rowCount === 0) {
       console.log(`No delivered orders found for email: ${email}`);
       return;
     }
 
-    console.log(`Delivered orders for client: ${email}`);
-    result.rows.forEach((order: any, index: number) => {
-      console.log(
-        `#${index + 1} | Order ID: ${order.id} | Date: ${
-          order.data_pedido
-        } | Total: $${order.valor_total}`
-      );
-    });
+    console.log(
+      `${result.rowCount} delivered orders found for email: ${email}`
+    );
   } catch (error) {
     console.error("Error fetching delivered orders:", error);
   } finally {
@@ -128,6 +106,7 @@ async function fetchDeliveredOrdersByClientEmail(email: string) {
 async function fetchTop5BestSellingProducts() {
   const client = await db.connect();
   const start = Date.now();
+  console.log("Fetching top 5 best-selling products...");
 
   try {
     const result = await client.query(
@@ -142,8 +121,7 @@ async function fetchTop5BestSellingProducts() {
        LIMIT 5`
     );
 
-    const duration = ((Date.now() - start) / 1000).toFixed(3);
-    console.log(`Query executed in ${duration} seconds`);
+    logTime("Fetch Top 5 Best-Selling Products Query", start, 3);
 
     if (result.rowCount === 0) {
       console.log("No product sales found.");
@@ -169,6 +147,7 @@ async function fetchTop5BestSellingProducts() {
 async function fetchPixPaymentsFromLastMonth() {
   const client = await db.connect();
   const start = Date.now();
+  console.log("Fetching PIX payments from the last month...");
 
   try {
     const result = await client.query(
@@ -183,20 +162,14 @@ async function fetchPixPaymentsFromLastMonth() {
        ORDER BY p.data_pagamento DESC`
     );
 
-    const duration = ((Date.now() - start) / 1000).toFixed(3);
-    console.log(`Query executed in ${duration} seconds`);
+    logTime("Fetch PIX Payments Query", start, 3);
 
     if (result.rowCount === 0) {
       console.log("No PIX payments found in the last month.");
       return;
     }
 
-    console.log("PIX Payments from the Last Month:");
-    result.rows.forEach((payment: any) => {
-      console.log(
-        `Payment ID: ${payment.id} | Order ID: ${payment.order_id} | Status: ${payment.status} | Date: ${payment.payment_date}`
-      );
-    });
+    console.log(`${result.rowCount} PIX payments found in the last month`);
   } catch (error) {
     console.log("Error fetching PIX payments:", error);
   } finally {
@@ -208,6 +181,7 @@ async function fetchPixPaymentsFromLastMonth() {
 async function getTotalSpentByClient(email: string) {
   const client = await db.connect();
   const start = Date.now();
+  console.log(`Calculating total spent by client with email: ${email}`);
 
   try {
     const result = await client.query(
@@ -223,8 +197,7 @@ async function getTotalSpentByClient(email: string) {
       [email]
     );
 
-    const duration = ((Date.now() - start) / 1000).toFixed(3);
-    console.log(`Query executed in ${duration} seconds`);
+    logTime("Get Total Spent By Client Query", start, 3);
 
     if (result.rowCount === 0) {
       console.log("No orders found for this client in the last 3 months.");
@@ -244,13 +217,13 @@ async function getTotalSpentByClient(email: string) {
 }
 
 // Query 1: Buscar cliente por email e listar seus últimos 3 pedidos
-// fetchClientAndRecentOrders("wilbert.deckow.dds311@example.com");
+// fetchClientAndRecentOrders("0Eve.Cartwright49@yahoo.com");
 
 // Query 2: Buscar produtos por categoria e ordenar por preço
 // fetchProductsByCategorySorted("Tools");
 
 // Query 3: Listar pedidos de um cliente com status “entregue”
-// fetchDeliveredOrdersByClientEmail("rosa.jakubowski1465@example.com");
+// fetchDeliveredOrdersByClientEmail("1Johann.Mann@hotmail.com");
 
 // Query 4: Obter os 5 produtos mais vendidos
 // fetchTop5BestSellingProducts();
@@ -259,4 +232,4 @@ async function getTotalSpentByClient(email: string) {
 // fetchPixPaymentsFromLastMonth();
 
 // Query 6: Obter o valor total gasto por um cliente em pedidos realizados em um determinado período (ex.: último 3 meses)
-// getTotalSpentByClient("wilbert.deckow.dds311@example.com");
+// getTotalSpentByClient("1Timmy.Ziemann@yahoo.com");

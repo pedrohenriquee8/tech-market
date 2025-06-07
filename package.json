@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "server": "nodemon --watch src --exec node -r dotenv/config -r tsconfig-paths/register -r ts-node/register src/app/main.ts",
     "seed:postgres": "ts-node -r dotenv/config -r tsconfig-paths/register src/scripts/postgres/seed.ts",
     "query:postgres": "ts-node -r dotenv/config -r tsconfig-paths/register src/scripts/postgres/queries.ts"
   },
@@ -13,10 +12,13 @@
   "description": "",
   "dependencies": {
     "@faker-js/faker": "^9.8.0",
+    "dayjs": "^1.11.13",
     "dotenv": "^16.5.0",
+    "mongodb": "^6.17.0",
     "pg": "^8.16.0",
     "tech-market": "file:",
-    "tsconfig-paths": "^4.2.0"
+    "tsconfig-paths": "^4.2.0",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@types/pg": "^8.15.4",

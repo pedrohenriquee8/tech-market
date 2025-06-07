@@ -1,122 +1,79 @@
 import { PostgresConnection } from "@infra/postgres/connection";
-import { faker } from "@faker-js/faker";
+import { clients, products, orders, orderItems, payments } from "@scripts/mock";
+import { logTime } from "@scripts/logTime";
 
 const db = new PostgresConnection();
-
-const NUM_CLIENTS = 20000;
-const NUM_PRODUCTS = 5000;
-const NUM_ORDERS = 30000;
-
-function logTime(label: string, startTime: number) {
-  const duration = ((Date.now() - startTime) / 1000).toFixed(2);
-  console.log(`${label} completed in ${duration} seconds.`);
-}
 
 async function seed() {
   const client = await db.connect();
 
   try {
+    // Clear existing data
+    console.log("Clearing existing data...");
+    await client.query(
+      `TRUNCATE TABLE cliente, produto, pedido, pedido_item, pagamento RESTART IDENTITY CASCADE`
+    );
+    console.log("Existing data cleared...");
+
+    // Populate clients
     console.log("Starting to populate clients...");
     let start = Date.now();
-
-    for (let i = 0; i < NUM_CLIENTS; i++) {
-      const fullName = faker.person.fullName();
-      const username = fullName.toLowerCase().replace(/[^a-zA-Z0-9]/g, ".");
-      const email = `${username}${i}@example.com`;
-
+    for (const c of clients) {
       await client.query(
-        `INSERT INTO cliente (nome, email, telefone, cpf, data_cadastro) VALUES ($1, $2, $3, $4, NOW())`,
-        [fullName, email, faker.string.numeric(11), faker.string.numeric(11)]
+        `INSERT INTO cliente (id, nome, email, telefone, cpf) VALUES ($1, $2, $3, $4, $5)`,
+        [c.id, c.nome, c.email, c.telefone, c.cpf]
       );
-      if (i > 0 && i % 5000 === 0) {
-        console.log(`Inserted ${i} clients...`);
-      }
     }
+    console.log(`Inserted ${clients.length} clients...`);
     logTime("Clients population", start);
 
+    // Populate products
     console.log("Starting to populate products...");
     start = Date.now();
-
-    for (let i = 0; i < NUM_PRODUCTS; i++) {
+    for (const p of products) {
       await client.query(
-        `INSERT INTO produto (nome, categoria, preco, estoque) VALUES ($1, $2, $3, $4)`,
-        [
-          faker.commerce.productName(),
-          faker.commerce.department(),
-          parseFloat(faker.commerce.price({ min: 10, max: 5000 })),
-          faker.number.int({ min: 1, max: 1000 }),
-        ]
+        `INSERT INTO produto (id, nome, categoria, preco, estoque) VALUES ($1, $2, $3, $4, $5)`,
+        [p.id, p.nome, p.categoria, p.preco, p.estoque]
       );
-      if (i > 0 && i % 1000 === 0) {
-        console.log(`Inserted ${i} products...`);
-      }
     }
+    console.log(`Inserted ${products.length} products...`);
     logTime("Products population", start);
 
-    console.log("Fetching clients and products IDs...");
-    const { rows: clients } = await client.query(`SELECT id FROM cliente`);
-    const { rows: products } = await client.query(`SELECT id FROM produto`);
-
-    console.log("Starting to populate orders and payments...");
+    // Populate orders
+    console.log("Starting to populate order...");
     start = Date.now();
-
-    for (let i = 0; i < NUM_ORDERS; i++) {
-      const clientData = faker.helpers.arrayElement(clients);
-      const orderDate = faker.date.between({
-        from: "2023-01-01",
-        to: "2025-01-01",
-      });
-
-      const orderResult = await client.query(
-        `INSERT INTO pedido (id_cliente, data_pedido, status, valor_total) VALUES ($1, $2, $3, 0) RETURNING id`,
-        [
-          clientData.id,
-          orderDate,
-          faker.helpers.arrayElement(["PENDING", "SHIPPED", "DELIVERED"]),
-        ]
-      );
-      const orderId = orderResult.rows[0].id;
-
-      const numItems = faker.number.int({ min: 1, max: 5 });
-      let totalValue = 0;
-
-      for (let j = 0; j < numItems; j++) {
-        const productData = faker.helpers.arrayElement(products);
-        const quantity = faker.number.int({ min: 1, max: 3 });
-
-        await client.query(
-          `INSERT INTO pedido_item (id_pedido, id_produto, quantidade) VALUES ($1, $2, $3)`,
-          [orderId, productData.id, quantity]
-        );
-
-        const { rows } = await client.query(
-          `SELECT preco FROM produto WHERE id = $1`,
-          [productData.id]
-        );
-        const price = rows[0].preco;
-        totalValue += price * quantity;
-      }
-
-      await client.query(`UPDATE pedido SET valor_total = $1 WHERE id = $2`, [
-        totalValue,
-        orderId,
-      ]);
-
+    for (const o of orders) {
       await client.query(
-        `INSERT INTO pagamento (id_pedido, tipo, status, data_pagamento) VALUES ($1, $2, $3, $4)`,
-        [
-          orderId,
-          faker.helpers.arrayElement(["cartao", "pix", "boleto"]),
-          faker.helpers.arrayElement(["PAID", "PENDING"]),
-          faker.date.between({ from: orderDate, to: "2025-12-31" }),
-        ]
+        `INSERT INTO pedido (id, id_cliente, data_pedido, status) VALUES ($1, $2, $3, $4)`,
+        [o.id, o.id_cliente, o.data_pedido, o.status]
       );
-
-      if (i > 0 && i % 5000 === 0) {
-        console.log(`Inserted ${i} orders and payments...`);
-      }
     }
-    logTime("Orders and payments population", start);
+    console.log(`Inserted ${orders.length} orders...`);
+    logTime("Orders population", start);
+
+    // Populate orders items
+    console.log("Starting to populate order items...");
+    start = Date.now();
+    for (const oi of orderItems) {
+      await client.query(
+        `INSERT INTO pedido_item (id, id_pedido, id_produto, quantidade, valor_unitario) VALUES ($1, $2, $3, $4, $5)`,
+        [oi.id, oi.id_pedido, oi.id_produto, oi.quantidade, oi.valor_unitario]
+      );
+    }
+    console.log(`Inserted ${orderItems.length} orders items...`);
+    logTime("Orders items population", start);
+
+    // Populate payments
+    console.log("Starting to populate payments...");
+    start = Date.now();
+    for (const p of payments) {
+      await client.query(
+        `INSERT INTO pagamento (id, id_pedido, tipo, status, data_pagamento) VALUES ($1, $2, $3, $4, $5)`,
+        [p.id, p.id_pedido, p.tipo, p.status, p.data_pagamento]
+      );
+    }
+    console.log(`Inserted ${payments.length} payments...`);
+    logTime("Payments population", start);
 
     console.log("Database seeding completed!");
   } catch (error) {
