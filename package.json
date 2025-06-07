@@ -4,7 +4,9 @@
   "main": "index.js",
   "scripts": {
     "seed:postgres": "ts-node -r dotenv/config -r tsconfig-paths/register src/scripts/postgres/seed.ts",
-    "query:postgres": "ts-node -r dotenv/config -r tsconfig-paths/register src/scripts/postgres/queries.ts"
+    "query:postgres": "ts-node -r dotenv/config -r tsconfig-paths/register src/scripts/postgres/queries.ts",
+    "seed:mongodb": "ts-node -r dotenv/config -r tsconfig-paths/register src/scripts/mongodb/seed.ts",
+    "query:mongodb": "ts-node -r dotenv/config -r tsconfig-paths/register src/scripts/mongodb/queries.ts"
   },
   "keywords": [],
   "author": "",

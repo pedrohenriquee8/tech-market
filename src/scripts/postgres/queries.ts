@@ -217,13 +217,13 @@ async function getTotalSpentByClient(email: string) {
 }
 
 // Query 1: Buscar cliente por email e listar seus últimos 3 pedidos
-// fetchClientAndRecentOrders("0Eve.Cartwright49@yahoo.com");
+// fetchClientAndRecentOrders("email");
 
 // Query 2: Buscar produtos por categoria e ordenar por preço
 // fetchProductsByCategorySorted("Tools");
 
 // Query 3: Listar pedidos de um cliente com status “entregue”
-// fetchDeliveredOrdersByClientEmail("1Johann.Mann@hotmail.com");
+// fetchDeliveredOrdersByClientEmail("email");
 
 // Query 4: Obter os 5 produtos mais vendidos
 // fetchTop5BestSellingProducts();
@@ -232,4 +232,4 @@ async function getTotalSpentByClient(email: string) {
 // fetchPixPaymentsFromLastMonth();
 
 // Query 6: Obter o valor total gasto por um cliente em pedidos realizados em um determinado período (ex.: último 3 meses)
-// getTotalSpentByClient("1Timmy.Ziemann@yahoo.com");
+// getTotalSpentByClient("email");
